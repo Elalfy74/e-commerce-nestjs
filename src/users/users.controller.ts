@@ -10,9 +10,9 @@ import {
 } from '@nestjs/common';
 import { User } from '@prisma/client';
 
-import { JwtGuard } from '../guard';
-import { Serialize } from '../interceptor';
-import { GetUser } from './decorator';
+import { JwtGuard } from '../common/guards';
+import { Serialize } from '../common/interceptors';
+import { GetUser } from './decorators';
 import { UserDto } from './dtos';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';

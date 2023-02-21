@@ -1,4 +1,5 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
+import { User } from '@prisma/client';
 import { hash } from 'bcryptjs';
 
 import { PrismaService } from '../prisma/prisma.service';
@@ -22,6 +23,12 @@ export class UsersService {
 
     return this.prisma.user.create({
       data: createUserDto,
+    });
+  }
+
+  findOne(filter: Partial<User>) {
+    return this.prisma.user.findFirst({
+      where: filter,
     });
   }
 }

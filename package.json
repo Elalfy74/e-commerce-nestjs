@@ -6,7 +6,15 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "prisma:test:restart": "dotenv -e .env.test -- prisma migrate reset -f",
+    "prisma:deploy": "prisma migrate deploy",
+    "prisma:dev:deploy": "dotenv -e .env.development -- prisma migrate deploy",
+    "db:dev:rm": "docker compose rm dev-db -s -f -v",
+    "db:dev:up": "docker compose up dev-db -d",
+    "db:dev:restart": "yarn db:dev:rm && yarn db:dev:up && timeout 2 && yarn prisma:dev:deploy",
+    "prisma:test:deploy": "dotenv -e .env.test -- prisma migrate deploy",
+    "db:test:rm": "docker compose rm test-db -s -f -v",
+    "db:test:up": "docker compose up test-db -d",
+    "db:test:restart": "yarn db:test:rm && yarn db:test:up && sleep 1 && yarn prisma:test:deploy",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
@@ -18,7 +26,7 @@
     "test:watch": "cross-env NODE_ENV=test jest --watch",
     "test:cov": "cross-env NODE_ENV=test jest --coverage",
     "test:debug": "cross-env NODE_ENV=test node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "pretest:e2e": "yarn prisma:test:restart",
+    "pretest:e2e": "yarn db:test:restart",
     "test:e2e": "cross-env NODE_ENV=test jest --config ./test/jest-e2e.json "
   },
   "dependencies": {

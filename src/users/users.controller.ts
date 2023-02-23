@@ -1,51 +1,26 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
-import { User } from '@prisma/client';
+import { Controller, Get, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 
 import { JwtGuard } from '../common/guards';
 import { Serialize } from '../common/interceptors';
 import { GetUser } from './decorators';
 import { UserDto } from './dtos';
-import { CreateUserDto } from './dtos/create-user.dto';
-import { UpdateUserDto } from './dtos/update-user.dto';
 import { UsersService } from './users.service';
 
 @Controller('users')
-@Serialize(UserDto)
 @UseGuards(JwtGuard)
+@Serialize(UserDto)
+@ApiTags('Users')
+@ApiBearerAuth()
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  // @Post()
-  // create(@Body() createUserDto: CreateUserDto) {
-  //   return this.usersService.create(createUserDto);
-  // }
-
-  // @Get()
-  // findAll() {
-  //   return this.usersService.findAll();
-  // }
-
   @Get('/me')
-  findOne(@GetUser() user: User) {
+  @ApiOkResponse({
+    description: 'The user data',
+    type: UserDto,
+  })
+  findOne(@GetUser() user: UserDto) {
     return user;
   }
-
-  // @Patch(':id')
-  // update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-  //   return this.usersService.update(+id, updateUserDto);
-  // }
-
-  // @Delete(':id')
-  // remove(@Param('id') id: string) {
-  //   return this.usersService.remove(+id);
-  // }
 }

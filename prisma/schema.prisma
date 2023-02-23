@@ -5,18 +5,37 @@ generator client {
   provider = "prisma-client-js"
 }
 
+generator prismaClassGenerator {
+  provider = "prisma-class-generator"
+  dryRun   = false
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id        String  @id @default(uuid())
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   firstName String
   lastName  String
-  email     String  @unique
-  password  String
-  avatar    String?
 
-  @@map("Users")
+  email    String  @unique
+  password String
+  avatar   String?
+
+  @@map("users")
+}
+
+model Category {
+  id String @id @default(uuid())
+
+  name        String @unique
+  description String
+  img         String
+
+  @@map("categories")
 }

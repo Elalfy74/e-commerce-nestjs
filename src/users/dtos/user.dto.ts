@@ -15,5 +15,11 @@ export class UserDto implements Omit<User, 'password'> {
   email: string;
 
   @Expose()
-  avatar: string;
+  avatar: string | null;
+
+  @Expose()
+  createdAt: Date;
+
+  @Expose()
+  updatedAt: Date;
 }

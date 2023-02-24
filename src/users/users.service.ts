@@ -26,9 +26,9 @@ export class UsersService {
     });
   }
 
-  findOne(filter: Partial<User>) {
-    return this.prisma.user.findFirst({
-      where: filter,
+  findOne(identifier: { id: string } | { email: string }) {
+    return this.prisma.user.findUnique({
+      where: identifier,
     });
   }
 }

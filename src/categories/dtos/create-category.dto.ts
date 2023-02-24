@@ -1,12 +1,12 @@
-import { IsString, IsUrl, Length } from 'class-validator';
+import { IsString, IsUrl, MinLength } from 'class-validator';
 
 export class CreateCategoryDto {
   @IsString()
-  @Length(1)
+  @MinLength(1)
   name: string;
 
   @IsString()
-  @Length(4)
+  @MinLength(4)
   description: string;
 
   @IsUrl()

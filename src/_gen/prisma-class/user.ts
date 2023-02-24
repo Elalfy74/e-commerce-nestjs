@@ -24,4 +24,7 @@ export class User {
 
   @ApiPropertyOptional({ type: String })
   avatar?: string;
+
+  @ApiProperty({ type: Boolean })
+  isAdmin: boolean;
 }

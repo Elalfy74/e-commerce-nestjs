@@ -20,7 +20,9 @@ export class UsersController {
     description: 'The user data',
     type: UserDto,
   })
-  findOne(@GetUser() user: UserDto) {
-    return user;
+  findOne(@GetUser() user: { userId: string }) {
+    return this.usersService.findOne({
+      id: user.userId,
+    });
   }
 }

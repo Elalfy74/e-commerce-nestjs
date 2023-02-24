@@ -16,7 +16,10 @@ export class AuthService {
 
   async signup(createUserDto: CreateUserDto) {
     const user = await this.usersService.create(createUserDto);
-    const accessToken = await this.signToken(user.id);
+    const accessToken = await this.signToken({
+      userId: user.id,
+      isAdmin: user.isAdmin,
+    });
 
     return {
       accessToken,
@@ -34,7 +37,10 @@ export class AuthService {
     if (!isEqual) throw new ForbiddenException('Invalid Email or Password');
 
     // Generate token and send response
-    const accessToken = await this.signToken(user.id);
+    const accessToken = await this.signToken({
+      userId: user.id,
+      isAdmin: user.isAdmin,
+    });
 
     return {
       accessToken,
@@ -42,8 +48,7 @@ export class AuthService {
     };
   }
 
-  private async signToken(userId: string) {
-    const payload = { sub: userId };
+  private async signToken(payload: { userId: string; isAdmin: boolean }) {
     const secret = this.config.get('JWT_SECRET');
 
     return this.jwt.signAsync(payload, {

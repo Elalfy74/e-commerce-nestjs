@@ -1,7 +1,7 @@
 import { User } from '@prisma/client';
 import { Expose } from 'class-transformer';
 
-export class UserDto implements Omit<User, 'password'> {
+export class UserDto implements Omit<User, 'password' | 'isAdmin'> {
   @Expose()
   id: string;
 

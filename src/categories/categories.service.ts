@@ -1,43 +1,69 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateCategoryDto } from './dto/create-category.dto';
-import { UpdateCategoryDto } from './dto/update-category.dto';
+import { CreateCategoryDto, UpdateCategoryDto } from './dtos';
 
 @Injectable()
 export class CategoriesService {
   constructor(private prisma: PrismaService) {}
 
   async create(createCategoryDto: CreateCategoryDto) {
-    const category = await this.prisma.category.findUnique({
-      where: { name: createCategoryDto.name },
-    });
-
-    if (category)
-      throw new ForbiddenException('Category name is already exist!');
-
-    return this.prisma.category.create({
-      data: createCategoryDto,
-    });
+    try {
+      return await this.prisma.category.create({
+        data: createCategoryDto,
+      });
+    } catch (e) {
+      if (e instanceof PrismaClientKnownRequestError && e.code === 'P2002') {
+        throw new ForbiddenException('Category Name Already Exist!');
+      }
+      throw e;
+    }
   }
 
   findAll() {
     return this.prisma.category.findMany();
   }
 
-  findOne(id: string) {
-    return this.prisma.category.findFirstOrThrow({
+  async findOne(id: string) {
+    const category = await this.prisma.category.findUnique({
       where: {
         id,
       },
     });
+
+    if (!category) throw new NotFoundException('Category Not Found!');
+    return category;
   }
 
-  update(id: number, updateCategoryDto: UpdateCategoryDto) {
-    return `This action updates a #${id} category`;
+  async update(id: string, updateCategoryDto: UpdateCategoryDto) {
+    try {
+      return await this.prisma.category.update({
+        where: { id },
+        data: updateCategoryDto,
+      });
+    } catch (e) {
+      if (e instanceof PrismaClientKnownRequestError && e.code === 'P2025') {
+        throw new NotFoundException('Category Not Found!');
+      }
+      throw e;
+    }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} category`;
+  async remove(id: string) {
+    try {
+      return await this.prisma.category.delete({
+        where: { id },
+      });
+    } catch (e) {
+      if (e instanceof PrismaClientKnownRequestError && e.code === 'P2025') {
+        throw new NotFoundException('Category Not Found!');
+      }
+      throw e;
+    }
   }
 }

@@ -7,47 +7,63 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { ApiCreatedResponse, ApiTags } from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 
 import { Category } from '../_gen/prisma-class/category';
+import { IdParamDto } from '../common/dtos';
 import { CategoriesService } from './categories.service';
-import { CreateCategoryDto } from './dto/create-category.dto';
-import { UpdateCategoryDto } from './dto/update-category.dto';
+import { CreateCategoryDto, UpdateCategoryDto } from './dtos';
 
 @Controller('categories')
 @ApiTags('Categories')
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
+  @Post()
   @ApiCreatedResponse({
-    description: 'The user data',
+    description: 'The category data',
     type: Category,
   })
-  @Post()
   create(@Body() createCategoryDto: CreateCategoryDto) {
     return this.categoriesService.create(createCategoryDto);
   }
 
   @Get()
+  @ApiOkResponse({
+    description: 'The all categories data',
+    type: [Category],
+  })
   findAll() {
     return this.categoriesService.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  @ApiOkResponse({
+    description: 'The category data',
+    type: Category,
+  })
+  findOne(@Param() { id }: IdParamDto) {
     return this.categoriesService.findOne(id);
   }
 
   @Patch(':id')
+  @ApiOkResponse({
+    description: 'The category data',
+    type: Category,
+  })
   update(
-    @Param('id') id: string,
+    @Param() { id }: IdParamDto,
     @Body() updateCategoryDto: UpdateCategoryDto,
   ) {
-    return this.categoriesService.update(+id, updateCategoryDto);
+    return this.categoriesService.update(id, updateCategoryDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.categoriesService.remove(+id);
+  @ApiOkResponse({
+    description: 'The category data',
+    type: Category,
+  })
+  remove(@Param() { id }: IdParamDto) {
+    return this.categoriesService.remove(id);
   }
 }

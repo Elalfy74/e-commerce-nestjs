@@ -6,7 +6,11 @@ import {
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateSubcategoryDto, UpdateSubcategoryDto } from './dtos';
+import {
+  CreateSubcategoryDto,
+  FindSubcategoryParamDto,
+  UpdateSubcategoryDto,
+} from './dtos';
 
 @Injectable()
 export class SubcategoriesService {
@@ -22,6 +26,11 @@ export class SubcategoriesService {
         if (e.code === 'P2003') {
           throw new ForbiddenException('Invalid categoryId!');
         }
+        if (e.code === 'P2002') {
+          throw new ForbiddenException(
+            'Subcategory already exist in this category!',
+          );
+        }
       }
       throw e;
     }
@@ -31,22 +40,24 @@ export class SubcategoriesService {
     return this.prisma.subCategory.findMany();
   }
 
-  async findOne(id: string) {
+  async findOne(param: FindSubcategoryParamDto) {
     const subCategory = await this.prisma.subCategory.findUnique({
       where: {
-        id,
+        categoryId_name: param,
       },
     });
-
     if (!subCategory) throw new NotFoundException('Subcategory Not Found!');
     return subCategory;
   }
 
-  async update(id: string, updateSubcategoryDto: UpdateSubcategoryDto) {
+  async update(
+    param: FindSubcategoryParamDto,
+    updateSubcategoryDto: UpdateSubcategoryDto,
+  ) {
     try {
       return await this.prisma.subCategory.update({
         where: {
-          id,
+          categoryId_name: param,
         },
         data: updateSubcategoryDto,
       });
@@ -58,16 +69,21 @@ export class SubcategoriesService {
         if (e.code === 'P2003') {
           throw new ForbiddenException('Invalid categoryId!');
         }
+        if (e.code === 'P2002') {
+          throw new ForbiddenException(
+            'Subcategory already exist in this category!',
+          );
+        }
         throw e;
       }
     }
   }
 
-  async remove(id: string) {
+  async remove(param: FindSubcategoryParamDto) {
     try {
       return await this.prisma.subCategory.delete({
         where: {
-          id,
+          categoryId_name: param,
         },
       });
     } catch (e) {

@@ -97,7 +97,7 @@ describe('Users Controller', () => {
 
         expect(res.statusCode).toBe(200);
         expect(res.body.user).toMatchObject(omit(signupDto, 'password'));
-        expect(res.body.user).not.toHaveProperty('password');
+        expect(res.body.user).not.toHaveProperty(['password', 'isAdmin']);
         expect(res.body).toHaveProperty('accessToken');
       });
 

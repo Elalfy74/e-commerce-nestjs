@@ -1,15 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class SubCategory {
+export class ProductColorSize {
   @ApiProperty({ type: String })
-  name: string;
+  productId: string;
 
   @ApiProperty({ type: String })
-  description: string;
+  color: string;
 
   @ApiProperty({ type: String })
-  img: string;
-
-  @ApiProperty({ type: String })
-  categoryId: string;
+  size: string;
 }

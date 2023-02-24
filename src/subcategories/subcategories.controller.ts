@@ -11,7 +11,11 @@ import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 
 import { SubCategory } from '../_gen/prisma-class/sub_category';
 import { IdParamDto } from '../common/dtos';
-import { CreateSubcategoryDto, UpdateSubcategoryDto } from './dtos';
+import {
+  CreateSubcategoryDto,
+  FindSubcategoryParamDto,
+  UpdateSubcategoryDto,
+} from './dtos';
 import { SubcategoriesService } from './subcategories.service';
 
 @Controller('subcategories')
@@ -41,29 +45,29 @@ export class SubcategoriesController {
     description: 'The subcategory data',
     type: SubCategory,
   })
-  @Get(':id')
-  findOne(@Param() { id }: IdParamDto) {
-    return this.subcategoriesService.findOne(id);
+  @Get(':categoryId/:name')
+  findOne(@Param() param: FindSubcategoryParamDto) {
+    return this.subcategoriesService.findOne(param);
   }
 
   @ApiOkResponse({
     description: 'The subcategory data',
     type: SubCategory,
   })
-  @Patch(':id')
+  @Patch(':categoryId/:name')
   update(
-    @Param() { id }: IdParamDto,
+    @Param() param: FindSubcategoryParamDto,
     @Body() updateSubcategoryDto: UpdateSubcategoryDto,
   ) {
-    return this.subcategoriesService.update(id, updateSubcategoryDto);
+    return this.subcategoriesService.update(param, updateSubcategoryDto);
   }
 
   @ApiOkResponse({
     description: 'The subcategory data',
     type: SubCategory,
   })
-  @Delete(':id')
-  remove(@Param() { id }: IdParamDto) {
-    return this.subcategoriesService.remove(id);
+  @Delete(':categoryId/:name')
+  remove(@Param() param: FindSubcategoryParamDto) {
+    return this.subcategoriesService.remove(param);
   }
 }

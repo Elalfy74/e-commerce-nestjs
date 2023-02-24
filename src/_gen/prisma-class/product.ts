@@ -5,9 +5,6 @@ export class Product {
   id: string;
 
   @ApiProperty({ type: String })
-  code: string;
-
-  @ApiProperty({ type: String })
   title: string;
 
   @ApiProperty({ type: String })
@@ -26,5 +23,8 @@ export class Product {
   avgRating?: number;
 
   @ApiProperty({ type: String })
-  subCategoryId: string;
+  categoryId: string;
+
+  @ApiProperty({ type: String })
+  subCategoryName: string;
 }

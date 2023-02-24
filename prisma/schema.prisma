@@ -69,8 +69,6 @@ model Category {
 }
 
 model SubCategory {
-  id String @id @default(uuid())
-
   name        String
   description String
   img         String
@@ -80,12 +78,13 @@ model SubCategory {
 
   Products Product[]
 
+  @@id([categoryId, name])
   @@map("subcategories")
 }
 
 model Product {
-  id   String @id @default(uuid())
-  code String @unique
+  id String @id @default(uuid())
+  // code String @unique
 
   title String
   desc  String
@@ -93,11 +92,12 @@ model Product {
   coverImg     String
   currentPrice Decimal
 
-  quantity  Int
+  quantity  Int      @default(0)
   avgRating Decimal?
 
-  subCategory   SubCategory @relation(fields: [subCategoryId], references: [id])
-  subCategoryId String
+  subCategory     SubCategory @relation(fields: [categoryId, subCategoryName], references: [categoryId, name])
+  categoryId      String
+  subCategoryName String
 
   ProductColors ProductColor[]
 
@@ -110,7 +110,7 @@ model ProductColor {
   productId String
   color     String
 
-  ProductColorSizes ProductColorSizes[]
+  ProductColorSizes ProductColorSize[]
   ProductColorImgs  ProductColorImg[]
 
   @@id([productId, color])
@@ -128,7 +128,7 @@ model ProductColorImg {
   @@map("productColorImgs")
 }
 
-model ProductColorSizes {
+model ProductColorSize {
   ProductColor ProductColor @relation(fields: [productId, color], references: [productId, color])
 
   productId String

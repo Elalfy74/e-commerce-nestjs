@@ -5,18 +5,136 @@ generator client {
   provider = "prisma-client-js"
 }
 
+generator prismaClassGenerator {
+  provider               = "prisma-class-generator"
+  dryRun                 = false
+  separateRelationFields = true
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id        String  @id @default(uuid())
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   firstName String
   lastName  String
-  email     String  @unique
-  password  String
-  avatar    String?
 
-  @@map("Users")
+  email    String  @unique
+  password String
+  avatar   String?
+  isAdmin  Boolean @default(false)
+
+  // customer Customer?
+  // Admin    Admin?
+
+  @@map("users")
+}
+
+// model Customer {
+//   user User   @relation(fields: [id], references: [id])
+//   id   String @id
+//   city String
+
+//   @@map("customers")
+// }
+
+// model Admin {
+//   user User   @relation(fields: [id], references: [id])
+//   id   String @id
+//   role Role
+
+//   @@map("admins")
+// }
+
+// enum Role {
+//   ADMIN
+//   MANAGER
+// }
+
+model Category {
+  id String @id @default(uuid())
+
+  name        String @unique
+  description String
+  img         String
+
+  SubCategories SubCategory[]
+
+  @@map("categories")
+}
+
+model SubCategory {
+  name        String
+  description String
+  img         String
+
+  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId String
+
+  Products Product[]
+
+  @@id([categoryId, name])
+  @@map("subcategories")
+}
+
+model Product {
+  id String @id @default(uuid())
+  // code String @unique
+
+  title String
+  desc  String
+
+  coverImg     String
+  currentPrice Decimal
+
+  quantity  Int      @default(0)
+  avgRating Decimal?
+
+  subCategory     SubCategory @relation(fields: [categoryId, subCategoryName], references: [categoryId, name])
+  categoryId      String
+  subCategoryName String
+
+  ProductColors ProductColor[]
+
+  @@map("products")
+}
+
+model ProductColor {
+  product Product @relation(fields: [productId], references: [id])
+
+  productId String
+  color     String
+
+  ProductColorSizes ProductColorSize[]
+  ProductColorImgs  ProductColorImg[]
+
+  @@id([productId, color])
+  @@map("productColors")
+}
+
+model ProductColorImg {
+  productColor ProductColor @relation(fields: [productId, color], references: [productId, color])
+
+  productId String
+  color     String
+  img       String
+
+  @@id([productId, color, img])
+  @@map("productColorImgs")
+}
+
+model ProductColorSize {
+  ProductColor ProductColor @relation(fields: [productId, color], references: [productId, color])
+
+  productId String
+  color     String
+  size      String
+
+  @@id([productId, color])
+  @@map("productColorSizes")
 }

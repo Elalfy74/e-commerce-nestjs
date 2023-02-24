@@ -13,6 +13,7 @@ async function bootstrap() {
   );
 
   const config = new DocumentBuilder()
+    .addBearerAuth()
     .setTitle('E-commerce API')
     .setDescription('The commerce API description')
     .setVersion('1.0')

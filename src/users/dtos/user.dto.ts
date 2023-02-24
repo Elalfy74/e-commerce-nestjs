@@ -1,7 +1,7 @@
 import { User } from '@prisma/client';
 import { Expose } from 'class-transformer';
 
-export class UserDto implements Omit<User, 'password'> {
+export class UserDto implements Omit<User, 'password' | 'isAdmin'> {
   @Expose()
   id: string;
 
@@ -15,5 +15,11 @@ export class UserDto implements Omit<User, 'password'> {
   email: string;
 
   @Expose()
-  avatar: string;
+  avatar: string | null;
+
+  @Expose()
+  createdAt: Date;
+
+  @Expose()
+  updatedAt: Date;
 }

@@ -5,24 +5,14 @@ import * as request from 'supertest';
 
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
-import { CreateUserDto, LoginDto } from '../src/users/dtos';
+import { LoginDto } from '../src/users/dtos';
+import { addUserToDB, signupDto } from './utils';
 
 describe('Users Controller', () => {
   let app: INestApplication;
   let prisma: PrismaService;
 
-  const signupDto: CreateUserDto = {
-    email: 'email@email.com',
-    firstName: 'firstName',
-    lastName: 'lastName',
-    password: 'password',
-  };
-
   const loginDto: LoginDto = pick(signupDto, ['email', 'password']);
-
-  function addUserToDB() {
-    return request(app.getHttpServer()).post('/auth/signup').send(signupDto);
-  }
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -52,15 +42,15 @@ describe('Users Controller', () => {
   });
 
   describe('/auth', () => {
-    describe('/signup', () => {
-      it('Should return 201 ,token and user without password', async () => {
+    describe('POST /signup', () => {
+      it('Should return 201 ,token and user without password and isAdmin', async () => {
         const res = await request(app.getHttpServer())
           .post('/auth/signup')
           .send(signupDto);
 
         expect(res.statusCode).toBe(201);
         expect(res.body.user).toMatchObject(omit(signupDto, 'password'));
-        expect(res.body.user).not.toHaveProperty('password');
+        expect(res.body.user).not.toHaveProperty(['password', 'isAdmin']);
         expect(res.body).toHaveProperty('accessToken');
       });
 
@@ -75,7 +65,7 @@ describe('Users Controller', () => {
       });
 
       it('Should return 403 if email already registered', async () => {
-        await addUserToDB();
+        await addUserToDB(app);
 
         const res = await request(app.getHttpServer())
           .post('/auth/signup')
@@ -85,19 +75,19 @@ describe('Users Controller', () => {
       });
     });
 
-    describe('/login', () => {
+    describe('POST /login', () => {
       beforeEach(async () => {
-        await addUserToDB();
+        await addUserToDB(app);
       });
 
-      it('Should return 200 ,token and user without password', async () => {
+      it('Should return 200 ,token and user without password and isAdmin', async () => {
         const res = await request(app.getHttpServer())
           .post('/auth/login')
           .send(loginDto);
 
         expect(res.statusCode).toBe(200);
         expect(res.body.user).toMatchObject(omit(signupDto, 'password'));
-        expect(res.body.user).not.toHaveProperty('password');
+        expect(res.body.user).not.toHaveProperty(['password', 'isAdmin']);
         expect(res.body).toHaveProperty('accessToken');
       });
 

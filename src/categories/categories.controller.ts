@@ -6,11 +6,18 @@ import {
   Param,
   Patch,
   Post,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 
 import { Category } from '../_gen/prisma-class/category';
 import { IdParamDto } from '../common/dtos';
+import { AdminGuard, JwtGuard } from '../common/guards';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto, UpdateCategoryDto } from './dtos';
 
@@ -20,8 +27,9 @@ export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
   @Post()
+  @UseGuards(JwtGuard, AdminGuard)
+  @ApiBearerAuth()
   @ApiCreatedResponse({
-    description: 'The category data',
     type: Category,
   })
   create(@Body() createCategoryDto: CreateCategoryDto) {
@@ -47,8 +55,9 @@ export class CategoriesController {
   }
 
   @Patch(':id')
+  @UseGuards(JwtGuard, AdminGuard)
+  @ApiBearerAuth()
   @ApiOkResponse({
-    description: 'The category data',
     type: Category,
   })
   update(
@@ -59,8 +68,9 @@ export class CategoriesController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtGuard, AdminGuard)
+  @ApiBearerAuth()
   @ApiOkResponse({
-    description: 'The category data',
     type: Category,
   })
   remove(@Param() { id }: IdParamDto) {

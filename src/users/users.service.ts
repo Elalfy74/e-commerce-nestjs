@@ -1,5 +1,5 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
-import { User } from '@prisma/client';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { hash } from 'bcryptjs';
 
 import { PrismaService } from '../prisma/prisma.service';
@@ -10,20 +10,22 @@ export class UsersService {
   constructor(private prisma: PrismaService) {}
 
   async create(createUserDto: CreateUserDto) {
-    const { email, password } = createUserDto;
-
-    // Check for email duplication
-    const user = await this.prisma.user.findUnique({
-      where: { email },
-    });
-    if (user) throw new ForbiddenException('Email is already registered!');
-
+    const { password } = createUserDto;
     // Hash password and create user
-    createUserDto.password = await hash(password, 12);
+    try {
+      createUserDto.password = await hash(password, 12);
 
-    return this.prisma.user.create({
-      data: createUserDto,
-    });
+      return await this.prisma.user.create({
+        data: createUserDto,
+      });
+    } catch (e) {
+      if (e instanceof PrismaClientKnownRequestError) {
+        if (e.code === 'P2002') {
+          throw new ForbiddenException('Email is already registered!');
+        }
+      }
+      throw e;
+    }
   }
 
   findOne(identifier: { id: string } | { email: string }) {

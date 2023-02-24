@@ -18,8 +18,10 @@ export class CategoriesService {
         data: createCategoryDto,
       });
     } catch (e) {
-      if (e instanceof PrismaClientKnownRequestError && e.code === 'P2002') {
-        throw new ForbiddenException('Category Name Already Exist!');
+      if (e instanceof PrismaClientKnownRequestError) {
+        if (e.code === 'P2002') {
+          throw new ForbiddenException('Category Name Already Exist!');
+        }
       }
       throw e;
     }
@@ -47,8 +49,13 @@ export class CategoriesService {
         data: updateCategoryDto,
       });
     } catch (e) {
-      if (e instanceof PrismaClientKnownRequestError && e.code === 'P2025') {
-        throw new NotFoundException('Category Not Found!');
+      if (e instanceof PrismaClientKnownRequestError) {
+        if (e.code === 'P2025') {
+          throw new NotFoundException('Category Not Found!');
+        }
+        if (e.code === 'P2002') {
+          throw new ForbiddenException('Category Name Already Exist!');
+        }
       }
       throw e;
     }
@@ -60,8 +67,10 @@ export class CategoriesService {
         where: { id },
       });
     } catch (e) {
-      if (e instanceof PrismaClientKnownRequestError && e.code === 'P2025') {
-        throw new NotFoundException('Category Not Found!');
+      if (e instanceof PrismaClientKnownRequestError) {
+        if (e.code === 'P2025') {
+          throw new NotFoundException('Category Not Found!');
+        }
       }
       throw e;
     }

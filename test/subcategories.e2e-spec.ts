@@ -1,23 +1,37 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Category } from '@prisma/client';
 import * as request from 'supertest';
 
 import { AppModule } from '../src/app.module';
-import { CreateCategoryDto, UpdateCategoryDto } from '../src/categories/dtos';
 import { PrismaService } from '../src/prisma/prisma.service';
-import { AuthResponseDto } from '../src/users/dtos';
 import {
-  addCategoryToDB,
-  addUserToDB,
-  createCategoryDto,
-  FAKE_UUID,
-  TOKEN,
-} from './utils';
+  CreateSubcategoryDto,
+  UpdateSubcategoryDto,
+} from '../src/subcategories/dtos';
+import { AuthResponseDto } from '../src/users/dtos';
+import { addCategoryToDB, addUserToDB, FAKE_UUID, IMG, TOKEN } from './utils';
 
-describe('Categories Controller', () => {
+describe('Subcategories Controller', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let user: AuthResponseDto;
+  let category: Category;
+
+  const createSubcategoryDto: CreateSubcategoryDto = {
+    name: 'Subcategory',
+    description: 'Desc',
+    img: IMG,
+    categoryId: '',
+  };
+
+  function addSubCategoryToDB(name?: string) {
+    const dto = name ? { ...createSubcategoryDto, name } : createSubcategoryDto;
+    return request(app.getHttpServer())
+      .post('/subcategories')
+      .set('Authorization', `Bearer ${TOKEN}`)
+      .send(dto);
+  }
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -37,8 +51,12 @@ describe('Categories Controller', () => {
     prisma = app.get(PrismaService);
     await prisma.cleanDb();
 
-    const res = await addUserToDB(app);
-    user = res.body;
+    const userRes = await addUserToDB(app);
+    user = userRes.body;
+
+    const catRes = await addCategoryToDB(app);
+    category = catRes.body;
+    createSubcategoryDto.categoryId = category.id;
   });
 
   afterAll(async () => {
@@ -47,31 +65,30 @@ describe('Categories Controller', () => {
   });
 
   afterEach(async () => {
-    await prisma.category.deleteMany();
+    await prisma.subCategory.deleteMany();
   });
 
-  describe('POST /categories', () => {
+  describe('POST /subcategories', () => {
     let token: string;
-    let dto: CreateCategoryDto;
+    let dto: CreateSubcategoryDto;
 
     const exec = () => {
       return request(app.getHttpServer())
-        .post('/categories')
+        .post('/subcategories')
         .set('Authorization', `Bearer ${token}`)
         .send(dto);
     };
 
     beforeEach(() => {
       token = TOKEN;
-      dto = createCategoryDto;
+      dto = { ...createSubcategoryDto };
     });
 
-    it('Should return 201 and the new category', async () => {
+    it('Should return 201 and the new subcategory', async () => {
       const res = await exec();
 
       expect(res.statusCode).toBe(201);
-      expect(res.body).toMatchObject(createCategoryDto);
-      expect(res.body).toHaveProperty('id');
+      expect(res.body).toMatchObject(createSubcategoryDto);
     });
 
     it('Should return 401 if no token is provided', async () => {
@@ -89,23 +106,30 @@ describe('Categories Controller', () => {
     });
 
     it('Should return 400 if invalid body is sent', async () => {
-      dto = { ...createCategoryDto, img: 'invalid_url' };
+      dto = { ...createSubcategoryDto, img: 'invalid_url' };
 
       const res = await exec();
       expect(res.statusCode).toBe(400);
     });
 
     it('Should return 403 if name already exist', async () => {
-      await addCategoryToDB(app);
+      await addSubCategoryToDB();
+
+      const res = await exec();
+      expect(res.statusCode).toBe(403);
+    });
+
+    it('Should return 403 if invalid categoryId is passed', async () => {
+      dto.categoryId = FAKE_UUID;
 
       const res = await exec();
       expect(res.statusCode).toBe(403);
     });
   });
 
-  describe('GET /categories', () => {
+  describe('GET /subcategories', () => {
     const exec = () => {
-      return request(app.getHttpServer()).get('/categories');
+      return request(app.getHttpServer()).get('/subcategories');
     };
 
     it('Should return 200 and empty array', async () => {
@@ -115,8 +139,8 @@ describe('Categories Controller', () => {
       expect(res.body).toHaveLength(0);
     });
 
-    it('Should return 200 and all categories', async () => {
-      await addCategoryToDB(app);
+    it('Should return 200 and all subcategories', async () => {
+      await addSubCategoryToDB();
       const res = await exec();
 
       expect(res.statusCode).toBe(200);
@@ -124,60 +148,66 @@ describe('Categories Controller', () => {
     });
   });
 
-  describe('GET /categories/:id', () => {
-    let id: string;
+  describe('GET /subcategories/:categoryId/:name', () => {
+    let categoryId: string;
+    let name: string;
 
     const exec = () => {
-      return request(app.getHttpServer()).get(`/categories/${id}`);
+      return request(app.getHttpServer()).get(
+        `/subcategories/${categoryId}/${name}`,
+      );
     };
 
     beforeEach(async () => {
-      const res = await addCategoryToDB(app);
-      id = res.body.id;
+      const res = await addSubCategoryToDB();
+      categoryId = res.body.categoryId;
+      name = res.body.name;
     });
 
-    it('Should return 200 and the category', async () => {
+    it('Should return 200 and the subcategory', async () => {
       const res = await exec();
 
       expect(res.statusCode).toBe(200);
-      expect(res.body).toMatchObject(createCategoryDto);
+      expect(res.body).toMatchObject(createSubcategoryDto);
     });
 
-    it('Should return 400 if invalid id type is passed', async () => {
-      id = 'wrong_id';
+    it('Should return 400 if invalid categoryId type is passed', async () => {
+      categoryId = 'wrong_id';
 
       const res = await exec();
       expect(res.statusCode).toBe(400);
     });
 
-    it('Should return 404 if category not found', async () => {
-      id = FAKE_UUID;
+    it('Should return 404 if subcategory not found', async () => {
+      categoryId = FAKE_UUID;
 
       const res = await exec();
       expect(res.statusCode).toBe(404);
     });
   });
 
-  describe('PATCH /categories', () => {
+  describe('PATCH /subcategories', () => {
     let token: string;
-    let dto: UpdateCategoryDto;
-    let id: string;
+    let dto: UpdateSubcategoryDto;
+    let categoryId: string;
+    let name: string;
 
     const exec = () => {
       return request(app.getHttpServer())
-        .patch(`/categories/${id}`)
+        .patch(`/subcategories/${categoryId}/${name}`)
         .set('Authorization', `Bearer ${token}`)
         .send(dto);
     };
 
     beforeEach(async () => {
       token = TOKEN;
-      dto = { ...createCategoryDto, name: 'new_name' };
-      const res = await addCategoryToDB(app);
-      id = res.body.id;
+      dto = { ...createSubcategoryDto, name: 'new_name' };
+      const res = await addSubCategoryToDB();
+      categoryId = res.body.categoryId;
+      name = res.body.name;
     });
 
-    it('Should return 200 and the new category', async () => {
+    it('Should return 200 and the new subcategory', async () => {
       const res = await exec();
 
       expect(res.statusCode).toBe(200);
@@ -198,15 +228,15 @@ describe('Categories Controller', () => {
       expect(res.statusCode).toBe(403);
     });
 
-    it('Should return 400 if invalid id type is passed', async () => {
-      id = 'wrong_id';
+    it('Should return 400 if invalid categoryId type is passed', async () => {
+      categoryId = 'wrong_id';
 
       const res = await exec();
       expect(res.statusCode).toBe(400);
     });
 
-    it('Should return 404 if category not found', async () => {
-      id = FAKE_UUID;
+    it('Should return 404 if subcategory not found', async () => {
+      categoryId = FAKE_UUID;
 
       const res = await exec();
       expect(res.statusCode).toBe(404);
@@ -221,7 +251,7 @@ describe('Categories Controller', () => {
 
     it('Should return 403 if name already exist', async () => {
       const name = 'dup';
-      await addCategoryToDB(app, name);
+      await addSubCategoryToDB(name);
       dto.name = name;
 
       const res = await exec();
@@ -231,28 +261,30 @@ describe('Categories Controller', () => {
 
   describe('DELETE /categories/:id', () => {
     let token: string;
-    let id: string;
+    let categoryId: string;
+    let name: string;
 
     const exec = () => {
       return request(app.getHttpServer())
-        .delete(`/categories/${id}`)
+        .delete(`/subcategories/${categoryId}/${name}`)
         .set('Authorization', `Bearer ${token}`);
     };
 
     beforeEach(async () => {
       token = TOKEN;
-      const res = await addCategoryToDB(app);
-      id = res.body.id;
+      const res = await addSubCategoryToDB();
+      categoryId = res.body.categoryId;
+      name = res.body.name;
     });
 
-    it('Should return 200 and the category', async () => {
+    it('Should return 200 and the subcategory', async () => {
       const res = await exec();
 
       expect(res.statusCode).toBe(200);
-      expect(res.body).toMatchObject(createCategoryDto);
+      expect(res.body).toMatchObject(createSubcategoryDto);
 
       const findRes = await request(app.getHttpServer()).get(
-        `/categories/${id}`,
+        `/subcategories/${categoryId}/${name}`,
       );
       expect(findRes.statusCode).toBe(404);
     });
@@ -271,15 +303,15 @@ describe('Categories Controller', () => {
       expect(res.statusCode).toBe(403);
     });
 
-    it('Should return 400 if invalid id type is passed', async () => {
-      id = 'wrong_id';
+    it('Should return 400 if invalid categoryId type is passed', async () => {
+      categoryId = 'wrong_id';
 
       const res = await exec();
       expect(res.statusCode).toBe(400);
     });
 
     it('Should return 404 if category not found', async () => {
-      id = FAKE_UUID;
+      categoryId = FAKE_UUID;
 
       const res = await exec();
       expect(res.statusCode).toBe(404);

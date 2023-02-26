@@ -135,6 +135,6 @@ model ProductColorSize {
   color     String
   size      String
 
-  @@id([productId, color])
+  @@id([productId, color, size])
   @@map("productColorSizes")
 }

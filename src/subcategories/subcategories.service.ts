@@ -28,7 +28,7 @@ export class SubcategoriesService {
         }
         if (e.code === 'P2002') {
           throw new ForbiddenException(
-            'Subcategory already exist in this category!',
+            'Subcategory with same name already exist in this category!',
           );
         }
       }
@@ -71,11 +71,11 @@ export class SubcategoriesService {
         }
         if (e.code === 'P2002') {
           throw new ForbiddenException(
-            'Subcategory already exist in this category!',
+            'Subcategory with same name already exist in this category!',
           );
         }
-        throw e;
       }
+      throw e;
     }
   }
 
@@ -91,8 +91,8 @@ export class SubcategoriesService {
         if (e.code === 'P2025') {
           throw new NotFoundException('Subcategory Not Found!');
         }
-        throw e;
       }
+      throw e;
     }
   }
 }

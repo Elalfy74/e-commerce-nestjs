@@ -38,7 +38,6 @@ export class CategoriesController {
 
   @Get()
   @ApiOkResponse({
-    description: 'The all categories data',
     type: [Category],
   })
   findAll() {
@@ -47,7 +46,6 @@ export class CategoriesController {
 
   @Get(':id')
   @ApiOkResponse({
-    description: 'The category data',
     type: Category,
   })
   findOne(@Param() { id }: IdParamDto) {

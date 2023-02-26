@@ -6,11 +6,17 @@ import {
   Param,
   Patch,
   Post,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 
 import { SubCategory } from '../_gen/prisma-class/sub_category';
-import { IdParamDto } from '../common/dtos';
+import { AdminGuard, JwtGuard } from '../common/guards';
 import {
   CreateSubcategoryDto,
   FindSubcategoryParamDto,
@@ -24,8 +30,9 @@ export class SubcategoriesController {
   constructor(private readonly subcategoriesService: SubcategoriesService) {}
 
   @Post()
+  @UseGuards(JwtGuard, AdminGuard)
+  @ApiBearerAuth()
   @ApiCreatedResponse({
-    description: 'The subcategory data',
     type: SubCategory,
   })
   create(@Body() createSubcategoryDto: CreateSubcategoryDto) {
@@ -34,7 +41,6 @@ export class SubcategoriesController {
 
   @Get()
   @ApiOkResponse({
-    description: 'The all subcategories data',
     type: [SubCategory],
   })
   findAll() {
@@ -42,7 +48,6 @@ export class SubcategoriesController {
   }
 
   @ApiOkResponse({
-    description: 'The subcategory data',
     type: SubCategory,
   })
   @Get(':categoryId/:name')
@@ -50,11 +55,12 @@ export class SubcategoriesController {
     return this.subcategoriesService.findOne(param);
   }
 
+  @Patch(':categoryId/:name')
+  @UseGuards(JwtGuard, AdminGuard)
+  @ApiBearerAuth()
   @ApiOkResponse({
-    description: 'The subcategory data',
     type: SubCategory,
   })
-  @Patch(':categoryId/:name')
   update(
     @Param() param: FindSubcategoryParamDto,
     @Body() updateSubcategoryDto: UpdateSubcategoryDto,
@@ -62,11 +68,12 @@ export class SubcategoriesController {
     return this.subcategoriesService.update(param, updateSubcategoryDto);
   }
 
+  @Delete(':categoryId/:name')
+  @UseGuards(JwtGuard, AdminGuard)
+  @ApiBearerAuth()
   @ApiOkResponse({
-    description: 'The subcategory data',
     type: SubCategory,
   })
-  @Delete(':categoryId/:name')
   remove(@Param() param: FindSubcategoryParamDto) {
     return this.subcategoriesService.remove(param);
   }

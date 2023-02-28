@@ -9,4 +9,7 @@ export class ProductColorSize {
 
   @ApiProperty({ type: String })
   size: string;
+
+  @ApiProperty({ type: Number })
+  quantity: number;
 }

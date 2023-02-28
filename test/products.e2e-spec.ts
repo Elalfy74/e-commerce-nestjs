@@ -1,23 +1,30 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { SubCategory } from '@prisma/client';
+import { omit } from 'lodash';
 import * as request from 'supertest';
 
 import { AppModule } from '../src/app.module';
-import { CreateCategoryDto, UpdateCategoryDto } from '../src/categories/dtos';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { CreateProductDto, UpdateProductDto } from '../src/products/dtos';
+import { setup } from '../src/setup';
 import { AuthResponseDto } from '../src/users/dtos';
 import {
   addCategoryToDB,
+  addProductToDB,
+  addSubCategoryToDB,
   addUserToDB,
-  createCategoryDto,
+  createProductDto,
+  createSubcategoryDto,
   FAKE_UUID,
   TOKEN,
 } from './utils';
 
-describe('Categories Controller', () => {
+describe('Products Controller', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let user: AuthResponseDto;
+  let subCategory: SubCategory;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -26,19 +33,29 @@ describe('Categories Controller', () => {
 
     app = moduleFixture.createNestApplication();
 
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-      }),
-    );
+    setup(app);
 
     await app.init();
 
     prisma = app.get(PrismaService);
     await prisma.cleanDb();
 
+    // Register user
     const res = await addUserToDB(app);
     user = res.body;
+
+    // Create Category
+    const categoryRes = await addCategoryToDB(app);
+    const category = categoryRes.body;
+
+    // Create Subcategory
+    createSubcategoryDto.categoryId = category.id;
+    const subCatRes = await addSubCategoryToDB(app);
+    subCategory = subCatRes.body;
+
+    // Configure Product Dto
+    createProductDto.categoryId = subCategory.categoryId;
+    createProductDto.subCategoryName = subCategory.name;
   });
 
   afterAll(async () => {
@@ -47,30 +64,30 @@ describe('Categories Controller', () => {
   });
 
   afterEach(async () => {
-    await prisma.category.deleteMany();
+    await prisma.product.deleteMany();
   });
 
-  describe('POST /categories', () => {
+  describe('POST /products', () => {
     let token: string;
-    let dto: CreateCategoryDto;
+    let dto: CreateProductDto;
 
     const exec = () => {
       return request(app.getHttpServer())
-        .post('/categories')
+        .post('/products')
         .set('Authorization', `Bearer ${token}`)
         .send(dto);
     };
 
     beforeEach(() => {
       token = TOKEN;
-      dto = createCategoryDto;
+      dto = createProductDto;
     });
 
-    it('Should return 201 and the new category', async () => {
+    it('Should return 201 and the new product', async () => {
       const res = await exec();
 
       expect(res.statusCode).toBe(201);
-      expect(res.body).toMatchObject(createCategoryDto);
+      expect(res.body).toMatchObject(omit(createProductDto, 'currentPrice'));
       expect(res.body).toHaveProperty('id');
     });
 
@@ -89,23 +106,30 @@ describe('Categories Controller', () => {
     });
 
     it('Should return 400 if invalid body is sent', async () => {
-      dto = { ...createCategoryDto, img: 'invalid_url' };
+      dto = { ...createProductDto, coverImg: 'invalid_url' };
 
       const res = await exec();
       expect(res.statusCode).toBe(400);
     });
 
-    it('Should return 403 if name already exist', async () => {
-      await addCategoryToDB(app);
+    it('Should return 403 if name categoryId is wrong', async () => {
+      dto = { ...createProductDto, categoryId: FAKE_UUID };
+
+      const res = await exec();
+      expect(res.statusCode).toBe(403);
+    });
+
+    it('Should return 403 if name categoryId is right but subCategoryName is wrong', async () => {
+      dto = { ...createProductDto, subCategoryName: 'Any_Name' };
 
       const res = await exec();
       expect(res.statusCode).toBe(403);
     });
   });
 
-  describe('GET /categories', () => {
+  describe('GET /products', () => {
     const exec = () => {
-      return request(app.getHttpServer()).get('/categories');
+      return request(app.getHttpServer()).get('/products');
     };
 
     it('Should return 200 and empty array', async () => {
@@ -115,8 +139,8 @@ describe('Categories Controller', () => {
       expect(res.body).toHaveLength(0);
     });
 
-    it('Should return 200 and all categories', async () => {
-      await addCategoryToDB(app);
+    it('Should return 200 and all products', async () => {
+      await addProductToDB(app);
       const res = await exec();
 
       expect(res.statusCode).toBe(200);
@@ -124,23 +148,23 @@ describe('Categories Controller', () => {
     });
   });
 
-  describe('GET /categories/:id', () => {
+  describe('GET /products/:id', () => {
     let id: string;
 
     const exec = () => {
-      return request(app.getHttpServer()).get(`/categories/${id}`);
+      return request(app.getHttpServer()).get(`/products/${id}`);
     };
 
     beforeEach(async () => {
-      const res = await addCategoryToDB(app);
+      const res = await addProductToDB(app);
       id = res.body.id;
     });
 
-    it('Should return 200 and the category', async () => {
+    it('Should return 200 and the product', async () => {
       const res = await exec();
 
       expect(res.statusCode).toBe(200);
-      expect(res.body).toMatchObject(createCategoryDto);
+      expect(res.body).toMatchObject(omit(createProductDto, 'currentPrice'));
     });
 
     it('Should return 400 if invalid id type is passed', async () => {
@@ -150,7 +174,7 @@ describe('Categories Controller', () => {
       expect(res.statusCode).toBe(400);
     });
 
-    it('Should return 404 if category not found', async () => {
+    it('Should return 404 if product not found', async () => {
       id = FAKE_UUID;
 
       const res = await exec();
@@ -158,30 +182,30 @@ describe('Categories Controller', () => {
     });
   });
 
-  describe('PATCH /categories/:id', () => {
+  describe('PATCH /products/:id', () => {
     let token: string;
-    let dto: UpdateCategoryDto;
+    let dto: UpdateProductDto;
     let id: string;
 
     const exec = () => {
       return request(app.getHttpServer())
-        .patch(`/categories/${id}`)
+        .patch(`/products/${id}`)
         .set('Authorization', `Bearer ${token}`)
         .send(dto);
     };
 
     beforeEach(async () => {
       token = TOKEN;
-      dto = { ...createCategoryDto, name: 'new_name' };
-      const res = await addCategoryToDB(app);
+      dto = { ...createProductDto, title: 'new_title' };
+      const res = await addProductToDB(app);
       id = res.body.id;
     });
 
-    it('Should return 200 and the new category', async () => {
+    it('Should return 200 and the new product', async () => {
       const res = await exec();
 
       expect(res.statusCode).toBe(200);
-      expect(res.body).toMatchObject(dto);
+      expect(res.body).toMatchObject(omit(dto, 'currentPrice'));
     });
 
     it('Should return 401 if no token is provided', async () => {
@@ -205,7 +229,7 @@ describe('Categories Controller', () => {
       expect(res.statusCode).toBe(400);
     });
 
-    it('Should return 404 if category not found', async () => {
+    it('Should return 404 if product not found', async () => {
       id = FAKE_UUID;
 
       const res = await exec();
@@ -213,47 +237,50 @@ describe('Categories Controller', () => {
     });
 
     it('Should return 400 if invalid body is sent', async () => {
-      dto = { ...dto, img: 'invalid_url' };
+      dto = { ...dto, coverImg: 'invalid_img' };
 
       const res = await exec();
       expect(res.statusCode).toBe(400);
     });
 
-    it('Should return 403 if name already exist', async () => {
-      const name = 'dup';
-      await addCategoryToDB(app, name);
-      dto.name = name;
+    it('Should return 403 if name categoryId is wrong', async () => {
+      dto = { ...createProductDto, categoryId: FAKE_UUID };
+
+      const res = await exec();
+      expect(res.statusCode).toBe(403);
+    });
+
+    it('Should return 403 if name categoryId is right but subCategoryName is wrong', async () => {
+      dto = { ...createProductDto, subCategoryName: 'Any_Name' };
 
       const res = await exec();
       expect(res.statusCode).toBe(403);
     });
   });
 
-  describe('DELETE /categories/:id', () => {
+  describe('DELETE /products/:id', () => {
     let token: string;
     let id: string;
 
     const exec = () => {
       return request(app.getHttpServer())
-        .delete(`/categories/${id}`)
+        .delete(`/products/${id}`)
         .set('Authorization', `Bearer ${token}`);
     };
 
     beforeEach(async () => {
       token = TOKEN;
-      const res = await addCategoryToDB(app);
+      const res = await addProductToDB(app);
       id = res.body.id;
     });
 
-    it('Should return 200 and the category', async () => {
+    it('Should return 200 and the product', async () => {
       const res = await exec();
 
       expect(res.statusCode).toBe(200);
-      expect(res.body).toMatchObject(createCategoryDto);
+      expect(res.body).toMatchObject(omit(createProductDto, 'currentPrice'));
 
-      const findRes = await request(app.getHttpServer()).get(
-        `/categories/${id}`,
-      );
+      const findRes = await request(app.getHttpServer()).get(`/products/${id}`);
       expect(findRes.statusCode).toBe(404);
     });
 
@@ -278,7 +305,7 @@ describe('Categories Controller', () => {
       expect(res.statusCode).toBe(400);
     });
 
-    it('Should return 404 if category not found', async () => {
+    it('Should return 404 if product not found', async () => {
       id = FAKE_UUID;
 
       const res = await exec();

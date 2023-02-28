@@ -1,7 +1,9 @@
 import { INestApplication } from '@nestjs/common';
+import { CreateProductDto } from 'src/products/dtos';
 import * as request from 'supertest';
 
 import { CreateCategoryDto } from '../src/categories/dtos';
+import { CreateSubcategoryDto } from '../src/subcategories/dtos';
 import { CreateUserDto } from '../src/users/dtos';
 
 export const TOKEN = process.env.TOKEN;
@@ -33,4 +35,35 @@ export function addCategoryToDB(app: INestApplication, name?: string) {
     .post('/categories')
     .set('Authorization', `Bearer ${TOKEN}`)
     .send(dto);
+}
+
+export const createSubcategoryDto: CreateSubcategoryDto = {
+  name: 'Subcategory',
+  description: 'Desc',
+  img: IMG,
+  categoryId: '',
+};
+
+export function addSubCategoryToDB(app: INestApplication, name?: string) {
+  const dto = name ? { ...createSubcategoryDto, name } : createSubcategoryDto;
+  return request(app.getHttpServer())
+    .post('/subcategories')
+    .set('Authorization', `Bearer ${TOKEN}`)
+    .send(dto);
+}
+
+export const createProductDto: CreateProductDto = {
+  title: 'product',
+  desc: 'Desc',
+  coverImg: IMG,
+  currentPrice: 2.0,
+  categoryId: '',
+  subCategoryName: '',
+};
+
+export function addProductToDB(app: INestApplication) {
+  return request(app.getHttpServer())
+    .post('/products')
+    .set('Authorization', `Bearer ${TOKEN}`)
+    .send(createProductDto);
 }

@@ -10,28 +10,20 @@ import {
   UpdateSubcategoryDto,
 } from '../src/subcategories/dtos';
 import { AuthResponseDto } from '../src/users/dtos';
-import { addCategoryToDB, addUserToDB, FAKE_UUID, IMG, TOKEN } from './utils';
+import {
+  addCategoryToDB,
+  addSubCategoryToDB,
+  addUserToDB,
+  createSubcategoryDto,
+  FAKE_UUID,
+  TOKEN,
+} from './utils';
 
 describe('Subcategories Controller', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let user: AuthResponseDto;
   let category: Category;
-
-  const createSubcategoryDto: CreateSubcategoryDto = {
-    name: 'Subcategory',
-    description: 'Desc',
-    img: IMG,
-    categoryId: '',
-  };
-
-  function addSubCategoryToDB(name?: string) {
-    const dto = name ? { ...createSubcategoryDto, name } : createSubcategoryDto;
-    return request(app.getHttpServer())
-      .post('/subcategories')
-      .set('Authorization', `Bearer ${TOKEN}`)
-      .send(dto);
-  }
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -113,7 +105,7 @@ describe('Subcategories Controller', () => {
     });
 
     it('Should return 403 if name already exist', async () => {
-      await addSubCategoryToDB();
+      await addSubCategoryToDB(app);
 
       const res = await exec();
       expect(res.statusCode).toBe(403);
@@ -140,7 +132,7 @@ describe('Subcategories Controller', () => {
     });
 
     it('Should return 200 and all subcategories', async () => {
-      await addSubCategoryToDB();
+      await addSubCategoryToDB(app);
       const res = await exec();
 
       expect(res.statusCode).toBe(200);
@@ -159,7 +151,7 @@ describe('Subcategories Controller', () => {
     };
 
     beforeEach(async () => {
-      const res = await addSubCategoryToDB();
+      const res = await addSubCategoryToDB(app);
       categoryId = res.body.categoryId;
       name = res.body.name;
     });
@@ -186,7 +178,7 @@ describe('Subcategories Controller', () => {
     });
   });
 
-  describe('PATCH /subcategories', () => {
+  describe('PATCH /subcategories/:categoryId/:name', () => {
     let token: string;
     let dto: UpdateSubcategoryDto;
     let categoryId: string;
@@ -202,7 +194,7 @@ describe('Subcategories Controller', () => {
     beforeEach(async () => {
       token = TOKEN;
       dto = { ...createSubcategoryDto, name: 'new_name' };
-      const res = await addSubCategoryToDB();
+      const res = await addSubCategoryToDB(app);
       categoryId = res.body.categoryId;
       name = res.body.name;
     });
@@ -251,7 +243,7 @@ describe('Subcategories Controller', () => {
 
     it('Should return 403 if name already exist', async () => {
       const name = 'dup';
-      await addSubCategoryToDB(name);
+      await addSubCategoryToDB(app, name);
       dto.name = name;
 
       const res = await exec();
@@ -259,7 +251,7 @@ describe('Subcategories Controller', () => {
     });
   });
 
-  describe('DELETE /categories/:id', () => {
+  describe('DELETE /categories/:categoryId/:name', () => {
     let token: string;
     let categoryId: string;
     let name: string;
@@ -272,7 +264,7 @@ describe('Subcategories Controller', () => {
 
     beforeEach(async () => {
       token = TOKEN;
-      const res = await addSubCategoryToDB();
+      const res = await addSubCategoryToDB(app);
       categoryId = res.body.categoryId;
       name = res.body.name;
     });

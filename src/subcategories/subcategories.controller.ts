@@ -15,8 +15,9 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
-import { SubCategory } from '../_gen/prisma-class/sub_category';
-import { AdminGuard, JwtGuard } from '../common/guards';
+import { SubCategory } from '@/_gen/prisma-class/sub_category';
+import { AdminGuard, JwtGuard } from '@/common/guards';
+
 import {
   CreateSubcategoryDto,
   FindSubcategoryParamDto,
@@ -47,10 +48,10 @@ export class SubcategoriesController {
     return this.subcategoriesService.findAll();
   }
 
+  @Get(':categoryId/:name')
   @ApiOkResponse({
     type: SubCategory,
   })
-  @Get(':categoryId/:name')
   findOne(@Param() param: FindSubcategoryParamDto) {
     return this.subcategoriesService.findOne(param);
   }

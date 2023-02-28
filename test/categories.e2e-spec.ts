@@ -2,10 +2,11 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as request from 'supertest';
 
-import { AppModule } from '../src/app.module';
-import { CreateCategoryDto, UpdateCategoryDto } from '../src/categories/dtos';
-import { PrismaService } from '../src/prisma/prisma.service';
-import { AuthResponseDto } from '../src/users/dtos';
+import { AppModule } from '@/app.module';
+import { CreateCategoryDto, UpdateCategoryDto } from '@/categories/dtos';
+import { PrismaService } from '@/prisma/prisma.service';
+import { AuthResponseDto } from '@/users/dtos';
+
 import {
   addCategoryToDB,
   addUserToDB,

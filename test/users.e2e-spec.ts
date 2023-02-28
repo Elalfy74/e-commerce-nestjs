@@ -3,9 +3,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { omit, pick } from 'lodash';
 import * as request from 'supertest';
 
-import { AppModule } from '../src/app.module';
-import { PrismaService } from '../src/prisma/prisma.service';
-import { LoginDto } from '../src/users/dtos';
+import { AppModule } from '@/app.module';
+import { PrismaService } from '@/prisma/prisma.service';
+import { LoginDto } from '@/users/dtos';
+
 import { addUserToDB, signupDto } from './utils';
 
 describe('Users Controller', () => {

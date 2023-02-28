@@ -134,6 +134,7 @@ model ProductColorSize {
   productId String
   color     String
   size      String
+  quantity  Int
 
   @@id([productId, color, size])
   @@map("productColorSizes")

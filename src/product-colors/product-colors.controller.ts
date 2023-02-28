@@ -15,8 +15,9 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
-import { ProductColor } from '../_gen/prisma-class/product_color';
-import { AdminGuard, JwtGuard } from '../common/guards';
+import { ProductColor } from '@/_gen/prisma-class/product_color';
+import { AdminGuard, JwtGuard } from '@/common/guards';
+
 import {
   CreateProductColorDto,
   FindProductColorParamDto,

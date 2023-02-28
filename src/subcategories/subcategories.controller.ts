@@ -15,8 +15,9 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
-import { SubCategory } from '../_gen/prisma-class/sub_category';
-import { AdminGuard, JwtGuard } from '../common/guards';
+import { SubCategory } from '@/_gen/prisma-class/sub_category';
+import { AdminGuard, JwtGuard } from '@/common/guards';
+
 import {
   CreateSubcategoryDto,
   FindSubcategoryParamDto,

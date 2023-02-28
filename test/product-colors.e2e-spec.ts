@@ -1,30 +1,30 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Category } from '@prisma/client';
+import { Product } from '@prisma/client';
 import * as request from 'supertest';
 
 import { AppModule } from '@/app.module';
 import { PrismaService } from '@/prisma/prisma.service';
 import {
-  CreateSubcategoryDto,
-  UpdateSubcategoryDto,
-} from '@/subcategories/dtos';
+  CreateProductColorDto,
+  UpdateProductColorDto,
+} from '@/product-colors/dtos';
+import { setup } from '@/setup';
 import { AuthResponseDto } from '@/users/dtos';
 
 import {
-  addCategoryToDB,
-  addSubCategoryToDB,
+  addFullProductToDB,
+  addProductColorToDB,
   addUserToDB,
-  createSubcategoryDto,
+  createProductColorDto,
   FAKE_UUID,
   TOKEN,
 } from './utils';
 
-describe('Subcategories Controller', () => {
+describe('ProductColors Controller', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let user: AuthResponseDto;
-  let category: Category;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -32,13 +32,7 @@ describe('Subcategories Controller', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-      }),
-    );
-
+    setup(app);
     await app.init();
 
     prisma = app.get(PrismaService);
@@ -48,10 +42,11 @@ describe('Subcategories Controller', () => {
     const userRes = await addUserToDB(app);
     user = userRes.body;
 
-    // Create Category
-    const catRes = await addCategoryToDB(app);
-    category = catRes.body;
-    createSubcategoryDto.categoryId = category.id;
+    // Create Product
+    const productReq = await addFullProductToDB(app);
+
+    // Configure ProductColor
+    createProductColorDto.productId = productReq.body.id;
   });
 
   afterAll(async () => {
@@ -60,30 +55,30 @@ describe('Subcategories Controller', () => {
   });
 
   afterEach(async () => {
-    await prisma.subCategory.deleteMany();
+    await prisma.productColor.deleteMany();
   });
 
-  describe('POST /subcategories', () => {
+  describe('POST /product-colors', () => {
     let token: string;
-    let dto: CreateSubcategoryDto;
+    let dto: CreateProductColorDto;
 
     const exec = () => {
       return request(app.getHttpServer())
-        .post('/subcategories')
+        .post('/product-colors')
         .set('Authorization', `Bearer ${token}`)
         .send(dto);
     };
 
     beforeEach(() => {
       token = TOKEN;
-      dto = { ...createSubcategoryDto };
+      dto = { ...createProductColorDto };
     });
 
-    it('Should return 201 and the new subcategory', async () => {
+    it('Should return 201 and the new product color', async () => {
       const res = await exec();
 
       expect(res.statusCode).toBe(201);
-      expect(res.body).toMatchObject(createSubcategoryDto);
+      expect(res.body).toMatchObject(createProductColorDto);
     });
 
     it('Should return 401 if no token is provided', async () => {
@@ -101,30 +96,30 @@ describe('Subcategories Controller', () => {
     });
 
     it('Should return 400 if invalid body is sent', async () => {
-      dto = { ...createSubcategoryDto, img: 'invalid_url' };
+      dto = { ...createProductColorDto, color: 'ad' };
 
       const res = await exec();
       expect(res.statusCode).toBe(400);
     });
 
-    it('Should return 403 if name already exist', async () => {
-      await addSubCategoryToDB(app);
+    it('Should return 403 if color already exist', async () => {
+      await addProductColorToDB(app);
 
       const res = await exec();
       expect(res.statusCode).toBe(403);
     });
 
-    it('Should return 403 if invalid categoryId is passed', async () => {
-      dto.categoryId = FAKE_UUID;
+    it('Should return 403 if invalid productId is passed', async () => {
+      dto.productId = FAKE_UUID;
 
       const res = await exec();
       expect(res.statusCode).toBe(403);
     });
   });
 
-  describe('GET /subcategories', () => {
+  describe('GET /product-colors', () => {
     const exec = () => {
-      return request(app.getHttpServer()).get('/subcategories');
+      return request(app.getHttpServer()).get('/product-colors');
     };
 
     it('Should return 200 and empty array', async () => {
@@ -134,8 +129,8 @@ describe('Subcategories Controller', () => {
       expect(res.body).toHaveLength(0);
     });
 
-    it('Should return 200 and all subcategories', async () => {
-      await addSubCategoryToDB(app);
+    it('Should return 200 and all products colors', async () => {
+      await addProductColorToDB(app);
       const res = await exec();
 
       expect(res.statusCode).toBe(200);
@@ -143,66 +138,65 @@ describe('Subcategories Controller', () => {
     });
   });
 
-  describe('GET /subcategories/:categoryId/:name', () => {
-    let categoryId: string;
-    let name: string;
+  describe('GET /product-colors/:productId/:color', () => {
+    let productId: string;
+    let color: string;
 
     const exec = () => {
       return request(app.getHttpServer()).get(
-        `/subcategories/${categoryId}/${name}`,
+        `/product-colors/${productId}/${color}`,
       );
     };
 
     beforeEach(async () => {
-      const res = await addSubCategoryToDB(app);
-      categoryId = res.body.categoryId;
-      name = res.body.name;
+      const res = await addProductColorToDB(app);
+      productId = res.body.productId;
+      color = res.body.color;
     });
 
-    it('Should return 200 and the subcategory', async () => {
+    it('Should return 200 and the product color', async () => {
       const res = await exec();
-
       expect(res.statusCode).toBe(200);
-      expect(res.body).toMatchObject(createSubcategoryDto);
+      expect(res.body).toMatchObject(createProductColorDto);
     });
 
-    it('Should return 400 if invalid categoryId type is passed', async () => {
-      categoryId = 'wrong_id';
+    it('Should return 400 if invalid productId type is passed', async () => {
+      productId = 'wrong_id';
 
       const res = await exec();
       expect(res.statusCode).toBe(400);
     });
 
-    it('Should return 404 if subcategory not found', async () => {
-      categoryId = FAKE_UUID;
+    it('Should return 404 if Product color not found', async () => {
+      productId = FAKE_UUID;
 
       const res = await exec();
       expect(res.statusCode).toBe(404);
     });
   });
 
-  describe('PATCH /subcategories/:categoryId/:name', () => {
+  describe('PATCH /product-colors/:productId/:color', () => {
     let token: string;
-    let dto: UpdateSubcategoryDto;
-    let categoryId: string;
-    let name: string;
+    let dto: UpdateProductColorDto;
+    let productId: string;
+    let color: string;
 
     const exec = () => {
       return request(app.getHttpServer())
-        .patch(`/subcategories/${categoryId}/${name}`)
+        .patch(`/product-colors/${productId}/${color}`)
         .set('Authorization', `Bearer ${token}`)
         .send(dto);
     };
 
     beforeEach(async () => {
       token = TOKEN;
-      dto = { ...createSubcategoryDto, name: 'new_name' };
-      const res = await addSubCategoryToDB(app);
-      categoryId = res.body.categoryId;
-      name = res.body.name;
+      dto = { ...createProductColorDto, color: 'ffffff' };
+      const res = await addProductColorToDB(app);
+      productId = res.body.productId;
+      color = res.body.color;
     });
 
-    it('Should return 200 and the new subcategory', async () => {
+    it('Should return 200 and the new product color', async () => {
       const res = await exec();
 
       expect(res.statusCode).toBe(200);
@@ -223,63 +217,63 @@ describe('Subcategories Controller', () => {
       expect(res.statusCode).toBe(403);
     });
 
-    it('Should return 400 if invalid categoryId type is passed', async () => {
-      categoryId = 'wrong_id';
+    it('Should return 400 if invalid productId type is passed', async () => {
+      productId = 'wrong_id';
 
       const res = await exec();
       expect(res.statusCode).toBe(400);
     });
 
-    it('Should return 404 if subcategory not found', async () => {
-      categoryId = FAKE_UUID;
+    it('Should return 404 if product color not found', async () => {
+      productId = FAKE_UUID;
 
       const res = await exec();
       expect(res.statusCode).toBe(404);
     });
 
     it('Should return 400 if invalid body is sent', async () => {
-      dto = { ...dto, img: 'invalid_url' };
+      dto = { ...dto, color: 'nb' };
 
       const res = await exec();
       expect(res.statusCode).toBe(400);
     });
 
-    it('Should return 403 if name already exist', async () => {
-      const name = 'dup';
-      await addSubCategoryToDB(app, name);
-      dto.name = name;
+    it('Should return 403 if color already exist', async () => {
+      const color = 'e3e3e3';
+      await addProductColorToDB(app, color);
+      dto.color = color;
 
       const res = await exec();
       expect(res.statusCode).toBe(403);
     });
   });
 
-  describe('DELETE /categories/:categoryId/:name', () => {
+  describe('DELETE /product-colors/:productId/:color', () => {
     let token: string;
-    let categoryId: string;
-    let name: string;
+    let productId: string;
+    let color: string;
 
     const exec = () => {
       return request(app.getHttpServer())
-        .delete(`/subcategories/${categoryId}/${name}`)
+        .delete(`/product-colors/${productId}/${color}`)
         .set('Authorization', `Bearer ${token}`);
     };
 
     beforeEach(async () => {
       token = TOKEN;
-      const res = await addSubCategoryToDB(app);
-      categoryId = res.body.categoryId;
-      name = res.body.name;
+      const res = await addProductColorToDB(app);
+      productId = res.body.productId;
+      color = res.body.color;
     });
 
-    it('Should return 200 and the subcategory', async () => {
+    it('Should return 200 and the product color', async () => {
       const res = await exec();
 
       expect(res.statusCode).toBe(200);
-      expect(res.body).toMatchObject(createSubcategoryDto);
+      expect(res.body).toMatchObject(createProductColorDto);
 
       const findRes = await request(app.getHttpServer()).get(
-        `/subcategories/${categoryId}/${name}`,
+        `/product-colors/${productId}/${color}`,
       );
       expect(findRes.statusCode).toBe(404);
     });
@@ -298,15 +292,15 @@ describe('Subcategories Controller', () => {
       expect(res.statusCode).toBe(403);
     });
 
-    it('Should return 400 if invalid categoryId type is passed', async () => {
-      categoryId = 'wrong_id';
+    it('Should return 400 if invalid productId type is passed', async () => {
+      productId = 'wrong_id';
 
       const res = await exec();
       expect(res.statusCode).toBe(400);
     });
 
-    it('Should return 404 if category not found', async () => {
-      categoryId = FAKE_UUID;
+    it('Should return 404 if product color not found', async () => {
+      productId = FAKE_UUID;
 
       const res = await exec();
       expect(res.statusCode).toBe(404);

@@ -4,11 +4,12 @@ import { SubCategory } from '@prisma/client';
 import { omit } from 'lodash';
 import * as request from 'supertest';
 
-import { AppModule } from '../src/app.module';
-import { PrismaService } from '../src/prisma/prisma.service';
-import { CreateProductDto, UpdateProductDto } from '../src/products/dtos';
-import { setup } from '../src/setup';
-import { AuthResponseDto } from '../src/users/dtos';
+import { AppModule } from '@/app.module';
+import { PrismaService } from '@/prisma/prisma.service';
+import { CreateProductDto, UpdateProductDto } from '@/products/dtos';
+import { setup } from '@/setup';
+import { AuthResponseDto } from '@/users/dtos';
+
 import {
   addCategoryToDB,
   addProductToDB,

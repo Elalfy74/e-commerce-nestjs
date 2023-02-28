@@ -1,7 +1,8 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 
-import { Serialize } from '../../common/interceptors';
+import { Serialize } from '@/common/interceptors';
+
 import { AuthResponseDto, CreateUserDto, LoginDto } from '../dtos';
 import { AuthService } from './auth.service';
 

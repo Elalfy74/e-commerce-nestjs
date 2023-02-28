@@ -15,9 +15,10 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
-import { Category } from '../_gen/prisma-class/category';
-import { IdParamDto } from '../common/dtos';
-import { AdminGuard, JwtGuard } from '../common/guards';
+import { Category } from '@/_gen/prisma-class/category';
+import { IdParamDto } from '@/common/dtos';
+import { AdminGuard, JwtGuard } from '@/common/guards';
+
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto, UpdateCategoryDto } from './dtos';
 

@@ -47,10 +47,10 @@ export class SubcategoriesController {
     return this.subcategoriesService.findAll();
   }
 
+  @Get(':categoryId/:name')
   @ApiOkResponse({
     type: SubCategory,
   })
-  @Get(':categoryId/:name')
   findOne(@Param() param: FindSubcategoryParamDto) {
     return this.subcategoriesService.findOne(param);
   }
